@@ -10,7 +10,7 @@ for step in range(200):
 
     observation, reward, terminations, truncations, infos = env.step(actions)
 
-    for agent, reward in reward.items():
+    for agent, reward in reward.items(): #test
         if reward!=0:
             print(f"Step {step}: {agent} got reward {reward}")
     
