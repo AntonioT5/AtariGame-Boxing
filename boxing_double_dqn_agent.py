@@ -1,3 +1,5 @@
+import os
+
 import random
 from collections import deque
 
@@ -32,17 +34,23 @@ class BoxingAtariNet(nn.Module):
 
 class DQNAgent:
     def __init__(self, num_channels=4, num_actions=18, learinging_rate=0.0001, 
-                 dicount_factor=0.99, batch_size=32, memory_size=50000):
+                 dicount_factor=0.99, batch_size=32, memory_size=50000, folder_path="LearnedExperience"):
+        
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
         self.num_channels = num_channels
         self.num_actions = num_actions
         self.dicount_factor=dicount_factor
         self.batch_size=batch_size
         self.memory_size = memory_size
+        self.folder_path=folder_path
+
+        os.makedirs(self.folder_path, exist_ok=True) # create folder for knowledge if missing
 
         self.memory = deque(maxlen=memory_size)
 
-        self.model = BoxingAtariNet(num_channels, num_actions)
-        self.target_model = BoxingAtariNet(num_channels,num_actions)
+        self.model = BoxingAtariNet(num_channels, num_actions).to(self.device)
+        self.target_model = BoxingAtariNet(num_channels,num_actions).to(self.device)
 
         self.criterion = nn.MSELoss()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learinging_rate)
@@ -65,15 +73,17 @@ class DQNAgent:
         if np.random.rand() < epsilon:
             return np.random.randint(0, self.num_actions)
         
-        state_t = torch.tensor(self.preproecess_state(state)).unsqueeze(0)
+        state_t = torch.tensor(self.preproecess_state(state)).unsqueeze(0).to(self.device)
         with torch.no_grad():
             return torch.argmax(self.model(state_t)).item()
         
     def save(self, model_name, episode):
-        torch.save(self.model.state_dict(), f'{model_name}_{episode}.pt')
+        path = os.path.join(self.folder_path, f'{model_name}_{episode}.pt')
+        torch.save(self.model.state_dict(), path)
 
     def load(self, model_name, episode):
-        self.model.load_state_dict(torch.load(f'{model_name}_{episode}.pt'))
+        path = os.path.join(self.folder_path, f'{model_name}_{episode}.pt')
+        self.model.load_state_dict(torch.load(path))
 
     def train(self):
         if len(self.memory) < self.batch_size:
@@ -83,8 +93,8 @@ class DQNAgent:
         states, targets = [], []
 
         for state, action, reward, next_state, done in batch:
-            state_t = torch.tensor(self.preproecess_state(state)).unsqueeze(0)
-            next_state_t = torch.tensor(self.preproecess_state(next_state)).unsqueeze(0)
+            state_t = torch.tensor(self.preproecess_state(state)).unsqueeze(0).to(self.device)
+            next_state_t = torch.tensor(self.preproecess_state(next_state)).unsqueeze(0).to(self.device)
 
             target = self.model(state_t).detach().clone().squeeze()
 
@@ -92,7 +102,9 @@ class DQNAgent:
                 target[action] = reward
             else:
                 with torch.no_grad():
-                    max_future_q = torch.max(self.target_model(next_state_t))
+                    best_action = torch.argmax(self.model(next_state_t))
+                    next_q_values = self.target_model(next_state_t).squeeze()
+                    max_future_q = next_q_values[best_action]
                 target[action] = reward + self.dicount_factor * max_future_q
 
             states.append(state_t)
@@ -105,6 +117,7 @@ class DQNAgent:
         outputs = self.model(state_tensor)
         loss = self.criterion(outputs, target_tensor)
         loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
         self.optimizer.step()
 
         return loss.item()

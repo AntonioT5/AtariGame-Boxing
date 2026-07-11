@@ -1,24 +1,22 @@
 from pettingzoo.atari import boxing_v2
-from preprocessing import preprocess_env
-import time
 
-env = boxing_v2.parallel_env(render_mode="human")
-env = preprocess_env(env)
-observations, info = env.reset()
+env = boxing_v2.parallel_env()
+observations, infos = env.reset()
 
-for step in range(200):
+nonzero_events = 0
+
+for step in range(2000):
     actions = {agent: env.action_space(agent).sample() for agent in env.agents}
+    observations, rewards, terminations, truncations, infos = env.step(actions)
 
-    observation, reward, terminations, truncations, infos = env.step(actions)
-    
-    for agent, reward in reward.items(): 
-        if reward!=0:
-            print(f"Step {step}: {agent} got reward {reward}")
-    
+    for agent, r in rewards.items():
+        if r != 0:
+            nonzero_events += 1
+            print(f"Step {step}: {agent} got reward {r}")
+
     if all(terminations.values()) or all(truncations.values()):
-        print("Episode finished, resetting...")
-        observation, info = env.reset()
+        print(f"Episode ended at step {step}")
+        break
 
-    time.sleep(0.2)
-
+print(f"Total nonzero reward events in this episode: {nonzero_events}")
 env.close()
