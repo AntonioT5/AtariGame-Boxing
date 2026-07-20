@@ -12,7 +12,7 @@ env = preprocess_env(env)
 NUM_TRAINING_EPISODES = 10
 agent = PretrainedDQNAgent(num_channels=4, num_actions=18)
 
-agent.load("boxing_dqn_pretrained", 50)
+agent.load("boxing_dqn_pretrained", 400)
 
 trained_agent_name = None
 random_agent_name = None

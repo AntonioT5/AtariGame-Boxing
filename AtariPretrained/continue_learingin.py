@@ -24,7 +24,7 @@ def quick_eval(agent, env, n_episodes=10):
 NUM_EPISODES = 1001 
 MAX_STEPS_PER_EPISODE = 2000
 TARGET_UPDATE_EVERY = 5 
-TRAIN_EVERY_N_STEPS = 4 
+TRAIN_EVERY_N_STEPS = 16
 
 env = boxing_v2.parallel_env()
 env = preprocess_env(env)
@@ -32,9 +32,9 @@ env = preprocess_env(env)
 agent = PretrainedDQNAgent(num_channels=4, num_actions=18)
 agent.load("boxing_dqn_pretrained", 150)
 
-epsilon = 0.467
-epsilon_min = 0.1
-epsilon_decay = 0.995
+epsilon = 0.548
+epsilon_min = 0.2
+epsilon_decay = 0.996
 
 episode_rewards = []
 recent_rewards = deque(maxlen=30)

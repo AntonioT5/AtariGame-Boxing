@@ -37,23 +37,26 @@ class PretrainedBoxingNet(nn.Module):
         resnet.fc = nn.Linear(num_features, actions)
 
         for name, param in resnet.named_parameters():
-            if name.startswith("bn1") or name.startswith("layer1") or name.startswith("layer2"):
+            if name.startswith("bn1") or name.startswith("layer1") or name.startswith("layer2") or name.startswith("layer3"):
                 param.requires_grad = False
-
-        # for name, module in resnet.named_modules():
-        #     if isinstance(module, nn.BatchNorm2d):
-        #         module.eval()
 
         self.resnet = resnet
 
     def forward(self, x):
         x=x/255.0
+        x = (x - x.mean(dim=(2, 3), keepdim=True)) / (x.std(dim=(2, 3), keepdim=True) + 1e-5)
         return self.resnet(x)
+    
+    def train(self, mode=True):
+        super().train(mode)
+        for name, module in self.resnet.named_modules():
+            if isinstance(module, nn.BatchNorm2d) and (name.startswith("bn1") or name.startswith("layer1") or name.startswith("layer2")) or name.startswith("layer3"):
+                module.eval()
 
 
 class PretrainedDQNAgent:
-    def __init__(self, num_channels=4, num_actions=18, learinging_rate=0.00001, 
-                 dicount_factor=0.99, batch_size=32, memory_size=50000, folder_path="LearnedExperiencePretrained"): #memory_size=50 000, learing_rate=0.0001 
+    def __init__(self, num_channels=4, num_actions=18, learinging_rate=0.000005,
+                 dicount_factor=0.99, batch_size=32, memory_size=50000, folder_path="LearnedExperiencePretrained"): #memory_size=200 000, learing_rate=0.00001 
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -70,6 +73,7 @@ class PretrainedDQNAgent:
 
         self.model = PretrainedBoxingNet(num_channels, num_actions).to(self.device)
         self.target_model = PretrainedBoxingNet(num_channels,num_actions).to(self.device)
+        self.target_model.eval()
 
         self.criterion = nn.SmoothL1Loss()
         self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()), lr=learinging_rate)
@@ -138,7 +142,7 @@ class PretrainedDQNAgent:
         self.optimizer.zero_grad()
         loss = self.criterion(current_q, target_q)
         loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=10)
+        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)
         self.optimizer.step()
 
         return loss.item()
