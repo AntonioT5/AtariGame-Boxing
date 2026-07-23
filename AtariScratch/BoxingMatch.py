@@ -1,18 +1,19 @@
+
 from pettingzoo.atari import boxing_v2
 from preprocessing import preprocess_env
-from boxing_pretrained_dqn_agent import PretrainedDQNAgent
+from boxing_double_dqn_agent import DQNAgent
 import numpy as np
 import torch
 from collections import Counter
 
-env = boxing_v2.parallel_env()
+env = boxing_v2.parallel_env(render_mode="human")
 env = preprocess_env(env)
 
 
-NUM_TRAINING_EPISODES = 10
-agent = PretrainedDQNAgent(num_channels=4, num_actions=18)
+NUM_TRAINING_EPISODES = 1
+agent = DQNAgent(num_channels=4, num_actions=18)
 
-agent.load("boxing_dqn_pretrained", 400)
+agent.load("boxing_dqn_scratch", 700)
 
 trained_agent_name = None
 random_agent_name = None
