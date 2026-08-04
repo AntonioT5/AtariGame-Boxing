@@ -36,6 +36,10 @@ The training and testing setup follow the exact same concepts established in Pha
 To compare the two agents fairly, both were trained for 700 episodes using identical hyperparameters (learning rate, target network update frequency, training frequency, epsilon decay), with the CNN architecture being the only difference between runs.
 The results show the scratch-trained Double DQN outperformed the pretrained ResNet agent on both metrics. The scratch model achieved a mean win rate of 0.36 against the random opponent, compared to 0.13 for the pretrained model, and its reward curve trended upward over training, ending in positive territory (+0.10) while the pretrained model's reward remained negative throughout (-2.77 final).
 
+## Phase 5: Head-to-Head Boxing Match
+In this phase, we include a direct matchup between the two trained agents (scratch Double DQN vs pretrained ResNet DQN). Both agents were loaded at their episode 700 checkpoints and played against each other. Running this matchup fully greedy (epsilon = 0) revealed an interesting behavior: the agents would repeatedly pause for 20 to 50 seconds at a time. Adding a small exploration rate (epsilon = 0.05) during this matchup produced continuous, watchable gameplay. 
+The head-to-head match between our two agents can be seen in *Scratch_vs_ResNet_Boxing_Fight.py*.
+
 
 
 
