@@ -6,7 +6,7 @@ from collections import Counter
 
 ROUNDS = 1
 
-env = boxing_v2.parallel_env(render_mode="human")
+env = boxing_v2.parallel_env(render_mode="human") #render_mode="human"
 env = preprocess_env(env)
 
 
@@ -21,6 +21,7 @@ resnet_agent_name = None
 scratch_wins, resnet_wins, draws = 0, 0, 0
 scratch_action_counts = Counter()
 resnet_action_counts = Counter()
+
 
 for episode in range(ROUNDS):
     observations, infos = env.reset()
