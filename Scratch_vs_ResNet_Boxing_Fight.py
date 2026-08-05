@@ -4,9 +4,9 @@ from AtariScratch.preprocessing import preprocess_env
 from pettingzoo.atari import boxing_v2
 from collections import Counter
 
-ROUNDS = 1
+ROUNDS = 11
 
-env = boxing_v2.parallel_env(render_mode="human") #render_mode="human"
+env = boxing_v2.parallel_env() #render_mode="human"
 env = preprocess_env(env)
 
 
@@ -33,8 +33,8 @@ for episode in range(ROUNDS):
     scratch_reward = 0
     resnet_reward = 0
     for step in range(2000):
-        scratch_action = scratch_agent.get_action(observations[scratch_agent_name], 0.5)
-        resnet_action = resnet_agent.get_action(observations[resnet_agent_name], 0.5)
+        scratch_action = scratch_agent.get_action(observations[scratch_agent_name], 0.1)
+        resnet_action = resnet_agent.get_action(observations[resnet_agent_name], 0.1)
 
         scratch_action_counts[scratch_action]+=1
         resnet_action_counts[resnet_action]+=1
